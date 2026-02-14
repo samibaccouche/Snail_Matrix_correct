@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AlgoSuite: Snail & Sequence</title>
+    <style>
+      :root {
+        --primary: #6366f1;
+        --secondary: #ec4899;
+        --bg: #0f172a;
+        --glass: rgba(255, 255, 255, 0.05);
+        --text: #f8fafc;
+      }
+
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+      }
+
+      .card {
+        background: var(--glass);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 2rem;
+        border-radius: 24px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(to right, #818cf8, #f472b6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 5px;
+        border-radius: 14px;
+      }
+
+      .tab-btn {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        background: transparent;
+        color: #94a3b8;
+        font-weight: 600;
+        transition: 0.3s;
+      }
+
+      .tab-btn.active {
+        background: var(--primary);
+        color: white;
+      }
+
+      .content-panel {
+        display: none;
+      }
+      .content-panel.active {
+        display: block;
+      }
+
+      .input-group {
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      input {
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.3);
+        color: white;
+        outline: none;
+      }
+
+      .action-btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(45deg, var(--primary), var(--secondary));
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+
+      .matrix-preview {
+        display: grid;
+        gap: 8px;
+        margin: 20px auto;
+        justify-content: center;
+      }
+
+      .matrix-cell {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid var(--primary);
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: bold;
+      }
+
+      .result-area {
+        margin-top: 20px;
+        padding: 12px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        font-family: monospace;
+        font-size: 0.9rem;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>AlgoSuite</h1>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('snail')">
+          Snail Matrix
+        </button>
+        <button class="tab-btn" onclick="switchTab('sequence')">
+          Consecutive
+        </button>
+      </div>
+
+      <div id="snail-panel" class="content-panel active">
+        <div class="input-group">
+          <label>Dimension (n)</label>
+          <input type="number" id="matrixSize" value="3" min="1" max="10" />
+        </div>
+        <div id="matrixVisual" class="matrix-preview"></div>
+        <button class="action-btn" onclick="runSnail()">Generate Spiral</button>
+        <div id="snailResult" class="result-area">Ready to spin...</div>
+      </div>
+
+      <div id="sequence-panel" class="content-panel">
+        <div class="input-group">
+          <label>Numeric String</label>
+          <input type="text" id="seqInput" placeholder="99100101" />
+        </div>
+        <button class="action-btn" onclick="runSequence()">
+          Check Validity
+        </button>
+        <div id="seqResult" class="result-area">Waiting for input...</div>
+      </div>
+    </div>
+
+    <script>
+      function switchTab(type) {
+        document
+          .querySelectorAll(".content-panel")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document.getElementById(type + "-panel").classList.add("active");
+        event.currentTarget.classList.add("active");
+      }
+
+      // --- THE FIX: SNAIL LOGIC ---
+      function runSnail() {
+        const n = parseInt(document.getElementById("matrixSize").value) || 3;
+        const grid = document.getElementById("matrixVisual");
+        const resultLabel = document.getElementById("snailResult");
+
+        // 1. Create a 2D array filled with 0s
+        let matrix = Array.from({ length: n }, () => Array(n).fill(0));
+
+        // 2. Fill the matrix in a clockwise spiral
+        let num = 1;
+        let top = 0,
+          bottom = n - 1,
+          left = 0,
+          right = n - 1;
+
+        while (top <= bottom && left <= right) {
+          for (let i = left; i <= right; i++) matrix[top][i] = num++;
+          top++;
+          for (let i = top; i <= bottom; i++) matrix[i][right] = num++;
+          right--;
+          if (top <= bottom) {
+            for (let i = right; i >= left; i--) matrix[bottom][i] = num++;
+            bottom--;
+          }
+          if (left <= right) {
+            for (let i = bottom; i >= top; i--) matrix[i][left] = num++;
+            left++;
+          }
+        }
+
+        // 3. Render the grid
+        grid.style.gridTemplateColumns = `repeat(${n}, 40px)`;
+        grid.innerHTML = "";
+
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) {
+            const cell = document.createElement("div");
+            cell.className = "matrix-cell";
+            cell.innerText = matrix[r][c];
+            grid.appendChild(cell);
+          }
+        }
+        resultLabel.innerHTML = `✨ <b>${n}x${n} Spiral Matrix</b> generated!`;
+      }
+
+      // --- CONSECUTIVE LOGIC ---
+      function runSequence() {
+        const str = document.getElementById("seqInput").value.trim();
+        const display = document.getElementById("seqResult");
+        if (str.length < 2) {
+          display.innerHTML = "❌ String too short";
+          return;
+        }
+
+        for (let len = 1; len <= Math.floor(str.length / 2); len++) {
+          let firstPart = str.substring(0, len);
+          if (firstPart.length > 1 && firstPart[0] === "0") continue;
+
+          let currentNum = BigInt(firstPart);
+          let builtStr = firstPart;
+          let path = [firstPart];
+
+          while (builtStr.length < str.length) {
+            currentNum++;
+            let nextStr = currentNum.toString();
+            builtStr += nextStr;
+            path.push(nextStr);
+          }
+
+          if (builtStr === str) {
+            display.innerHTML = `✅ Valid!<br><span style="color:#4ade80">${path.join(" ➔ ")}</span>`;
+            return;
+          }
+        }
+        display.innerHTML = `<span style="color:#f87171">❌ Invalid sequence</span>`;
+      }
+
+      // Start with a 3x3 on load
+      runSnail();
+    </script>
+  </body>
+</html>
